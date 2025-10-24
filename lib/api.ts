@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Database } from './database.types';
+import { getCurrentUser } from './auth';
 
 type Pengeluaran = Database['public']['Tables']['pengeluaran']['Row'];
 type Pemasukan = Database['public']['Tables']['pemasukan']['Row'];
@@ -10,6 +11,17 @@ type BudgetBulanan = Database['public']['Tables']['budget_bulanan']['Row'];
 // =============================================
 // HELPER FUNCTIONS
 // =============================================
+
+/**
+ * Get current authenticated user ID
+ */
+async function getCurrentUserId(): Promise<string> {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+  return user.id;
+}
 
 /**
  * Calculate task level dynamically based on deadline
@@ -47,9 +59,12 @@ export function addDynamicLevel(tugas: Tugas) {
  * Get all expenses, optionally filtered by month/year
  */
 export async function getPengeluaran(bulan?: number, tahun?: number) {
+  const userId = await getCurrentUserId();
+  
   let query = supabase
     .from('pengeluaran')
     .select('*')
+    .eq('user_id', userId)
     .order('tanggal', { ascending: false });
 
   if (bulan && tahun) {
@@ -80,9 +95,12 @@ export async function getTotalPengeluaran(bulan: number, tahun: number) {
  * Get recent expenses (limit 3 by default)
  */
 export async function getPengeluaranTerbaru(limit: number = 3) {
+  const userId = await getCurrentUserId();
+  
   const { data, error } = await supabase
     .from('pengeluaran')
     .select('*')
+    .eq('user_id', userId)
     .order('tanggal', { ascending: false })
     .limit(limit);
 
@@ -98,9 +116,10 @@ export async function getPengeluaranTerbaru(limit: number = 3) {
  * Add new expense
  */
 export async function addPengeluaran(pengeluaran: Database['public']['Tables']['pengeluaran']['Insert']) {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('pengeluaran')
-    .insert(pengeluaran as any)
+    .insert({ ...pengeluaran, user_id: userId } as any)
     .select()
     .single();
 
@@ -120,9 +139,11 @@ export async function addPengeluaran(pengeluaran: Database['public']['Tables']['
  * Get all income, optionally filtered by month/year
  */
 export async function getPemasukan(bulan?: number, tahun?: number) {
+  const userId = await getCurrentUserId();
   let query = supabase
     .from('pemasukan')
     .select('*')
+    .eq('user_id', userId)
     .order('tanggal', { ascending: false });
 
   if (bulan && tahun) {
@@ -153,9 +174,10 @@ export async function getTotalPemasukan(bulan: number, tahun: number) {
  * Add new income
  */
 export async function addPemasukan(pemasukan: Database['public']['Tables']['pemasukan']['Insert']) {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('pemasukan')
-    .insert(pemasukan as any)
+    .insert({ ...pemasukan, user_id: userId } as any)
     .select()
     .single();
 
@@ -171,10 +193,12 @@ export async function addPemasukan(pemasukan: Database['public']['Tables']['pema
  * Delete income
  */
 export async function deletePemasukan(id: string) {
+  const userId = await getCurrentUserId();
   const { error } = await supabase
     .from('pemasukan')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error deleting pemasukan:', error);
@@ -190,9 +214,11 @@ export async function deletePemasukan(id: string) {
  * Get all tasks
  */
 export async function getTugas(selesaiOnly?: boolean) {
+  const userId = await getCurrentUserId();
   let query = supabase
     .from('tugas')
     .select('*')
+    .eq('user_id', userId)
     .order('deadline', { ascending: true });
 
   if (selesaiOnly !== undefined) {
@@ -214,9 +240,11 @@ export async function getTugas(selesaiOnly?: boolean) {
  * Get incomplete tasks
  */
 export async function getTugasBelumSelesai(limit?: number) {
+  const userId = await getCurrentUserId();
   let query = supabase
     .from('tugas')
     .select('*')
+    .eq('user_id', userId)
     .eq('selesai', false)
     .order('deadline', { ascending: true });
 
@@ -239,9 +267,11 @@ export async function getTugasBelumSelesai(limit?: number) {
  * Count incomplete tasks
  */
 export async function countTugasBelumSelesai() {
+  const userId = await getCurrentUserId();
   const { count, error } = await supabase
     .from('tugas')
     .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
     .eq('selesai', false);
 
   if (error) {
@@ -256,9 +286,10 @@ export async function countTugasBelumSelesai() {
  * Add new task
  */
 export async function addTugas(tugas: Database['public']['Tables']['tugas']['Insert']) {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('tugas')
-    .insert(tugas as any)
+    .insert({ ...tugas, user_id: userId } as any)
     .select()
     .single();
 
@@ -274,10 +305,12 @@ export async function addTugas(tugas: Database['public']['Tables']['tugas']['Ins
  * Update task (e.g., mark as complete)
  */
 export async function updateTugas(id: string, updates: Database['public']['Tables']['tugas']['Update']) {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('tugas')
     .update(updates as any)
     .eq('id', id)
+    .eq('user_id', userId)
     .select()
     .single();
 
@@ -297,9 +330,11 @@ export async function updateTugas(id: string, updates: Database['public']['Table
  * Get all debts
  */
 export async function getHutang(lunasOnly?: boolean) {
+  const userId = await getCurrentUserId();
   let query = supabase
     .from('hutang')
     .select('*')
+    .eq('user_id', userId)
     .order('jatuh_tempo', { ascending: true });
 
   if (lunasOnly !== undefined) {
@@ -320,9 +355,11 @@ export async function getHutang(lunasOnly?: boolean) {
  * Get unpaid debts
  */
 export async function getHutangBelumLunas(limit?: number) {
+  const userId = await getCurrentUserId();
   let query = supabase
     .from('hutang')
     .select('*')
+    .eq('user_id', userId)
     .eq('lunas', false)
     .order('jatuh_tempo', { ascending: true });
 
@@ -344,12 +381,14 @@ export async function getHutangBelumLunas(limit?: number) {
  * Count debts due this week
  */
 export async function countHutangJatuhTempoMingguIni() {
+  const userId = await getCurrentUserId();
   const today = new Date();
   const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
   
   const { count, error } = await supabase
     .from('hutang')
     .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
     .eq('lunas', false)
     .gte('jatuh_tempo', today.toISOString().split('T')[0])
     .lte('jatuh_tempo', nextWeek.toISOString().split('T')[0]);
@@ -374,9 +413,10 @@ export async function getTotalNilaiHutang() {
  * Add new debt
  */
 export async function addHutang(hutang: Database['public']['Tables']['hutang']['Insert']) {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('hutang')
-    .insert(hutang as any)
+    .insert({ ...hutang, user_id: userId } as any)
     .select()
     .single();
 
@@ -392,10 +432,12 @@ export async function addHutang(hutang: Database['public']['Tables']['hutang']['
  * Update debt (e.g., mark as paid)
  */
 export async function updateHutang(id: string, updates: Database['public']['Tables']['hutang']['Update']) {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('hutang')
     .update(updates as any)
     .eq('id', id)
+    .eq('user_id', userId)
     .select()
     .single();
 
@@ -415,19 +457,22 @@ export async function updateHutang(id: string, updates: Database['public']['Tabl
  * Get budget for a specific month
  */
 export async function getBudgetBulanan(bulan: number, tahun: number) {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('budget_bulanan')
     .select('*')
+    .eq('user_id', userId)
     .eq('bulan', bulan)
     .eq('tahun', tahun)
-    .single();
+    .maybeSingle(); // Use maybeSingle() instead of single() to handle no data
 
   if (error) {
     console.error('Error fetching budget bulanan:', error);
     return null;
   }
 
-  return data as BudgetBulanan;
+  // Return null if no budget found (not an error)
+  return data as BudgetBulanan | null;
 }
 
 /**
@@ -445,9 +490,10 @@ export async function getCurrentMonthBudget() {
  * Set or update monthly budget
  */
 export async function setBudgetBulanan(budget: Database['public']['Tables']['budget_bulanan']['Insert']) {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('budget_bulanan')
-    .upsert(budget as any, { onConflict: 'bulan,tahun' })
+    .upsert({ ...budget, user_id: userId } as any, { onConflict: 'bulan,tahun,user_id' })
     .select()
     .single();
 
@@ -471,6 +517,8 @@ export async function getDashboardData() {
   const bulan = now.getMonth() + 1;
   const tahun = now.getFullYear();
 
+  const userId = await getCurrentUserId();
+  
   const [
     budget,
     totalPengeluaran,
@@ -489,7 +537,7 @@ export async function getDashboardData() {
     getPengeluaranTerbaru(3),
     countTugasBelumSelesai(),
     getTugasBelumSelesai(3),
-    supabase.from('tugas').select('*', { count: 'exact', head: true }).then(({ count }) => count || 0),
+    supabase.from('tugas').select('*', { count: 'exact', head: true }).eq('user_id', userId).then(({ count }) => count || 0),
     getHutangBelumLunas(3),
     getTotalNilaiHutang(),
     countHutangJatuhTempoMingguIni()
