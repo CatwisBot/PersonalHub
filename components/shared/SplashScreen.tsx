@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Sparkles, TrendingUp, Wallet, CheckSquare, HandCoins, Target, ArrowRight } from "lucide-react";
+import { Sparkles, TrendingUp, Wallet, CheckSquare, HandCoins, Target, ArrowRight, LogIn, UserPlus } from "lucide-react";
+import { getCurrentUser } from "@/lib/auth";
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -10,11 +12,28 @@ interface SplashScreenProps {
   showButton?: boolean;
 }
 
-export default function SplashScreenComponent({ onFinish, duration = 3000, showButton = true }: SplashScreenProps) {
+export default function SplashScreenComponent({ onFinish, duration = 2000, showButton = true }: SplashScreenProps) {
+  const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [showCTA, setShowCTA] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
+    // Check authentication status
+    async function checkAuth() {
+      try {
+        const user = await getCurrentUser();
+        setIsAuthenticated(!!user);
+      } catch (error) {
+        setIsAuthenticated(false);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    }
+
+    checkAuth();
+
     // Progress animation untuk efek visual
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
@@ -70,7 +89,7 @@ export default function SplashScreenComponent({ onFinish, duration = 3000, showB
         </h1>
 
         {/* Tagline */}
-        <p className="text-gray-300 text-lg sm:text-xl mb-8 animate-slide-up-delay flex items-center justify-center gap-2 flex-wrap">
+        <p className="text-gray-300 text-base sm:text-xl mb-8 animate-slide-up-delay flex items-center justify-center gap-2 flex-wrap">
           <Sparkles className="w-5 h-5 text-yellow-400 animate-pulse" />
           <span>Kelola Keuangan & Produktivitas Anda</span>
           <TrendingUp className="w-5 h-5 text-green-400 animate-pulse" />
@@ -92,8 +111,8 @@ export default function SplashScreenComponent({ onFinish, duration = 3000, showB
           </div>
         </div>
 
-        {/* Progress Bar or CTA Button */}
-        {!showCTA ? (
+        {/* Progress Bar or CTA Buttons */}
+        {!showCTA || isCheckingAuth ? (
           <div className="animate-slide-up-delay-3">
             <div className="w-full max-w-xs mx-auto bg-slate-800/50 rounded-full h-2 overflow-hidden backdrop-blur-sm border border-slate-700/50">
               <div
@@ -103,7 +122,8 @@ export default function SplashScreenComponent({ onFinish, duration = 3000, showB
             </div>
             <p className="text-gray-400 text-sm mt-3">Menyiapkan...</p>
           </div>
-        ) : (
+        ) : isAuthenticated ? (
+          // User sudah login - Tombol "Catat Sekarang"
           <div className="animate-slide-up space-y-4">
             <button
               onClick={onFinish}
@@ -120,12 +140,32 @@ export default function SplashScreenComponent({ onFinish, duration = 3000, showB
               Klik untuk mulai mengelola keuangan Anda
             </p>
           </div>
+        ) : (
+          // User belum login - Tombol "Masuk" dan "Daftar"
+          <div className="animate-slide-up space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => router.push("/auth/signin")}
+                className="group relative overflow-hidden bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+              >
+                <LogIn className="w-5 h-5" />
+                <span>Masuk</span>
+              </button>
+              
+              <button
+                onClick={() => router.push("/auth/signup")}
+                className="group relative overflow-hidden bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+              >
+                <UserPlus className="w-5 h-5" />
+                <span>Daftar</span>
+              </button>
+            </div>
+            
+            <p className="text-gray-400 text-sm text-center">
+              Masuk atau daftar untuk mulai menggunakan PersonalHub
+            </p>
+          </div>
         )}
-
-        {/* Version */}
-        <p className="text-gray-500 text-xs mt-8 animate-fade-in-slow">
-          v1.0.0 - Beta
-        </p>
       </div>
 
       <style jsx>{`
