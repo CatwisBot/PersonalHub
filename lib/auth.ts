@@ -1,13 +1,4 @@
-import { supabase } from "./supabase";
-
-// Helper to check if Supabase is properly configured
-function checkSupabaseConfig() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn('Supabase environment variables are not configured');
-    return false;
-  }
-  return true;
-}
+import { supabase, isSupabaseConfigured } from "./supabase";
 
 export interface SignUpData {
   nama: string;
@@ -28,6 +19,10 @@ export interface UserProfile {
 
 // Sign Up - Register user baru
 export async function signUp({ nama, email, password }: SignUpData) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured. Please check your environment variables.');
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -44,30 +39,61 @@ export async function signUp({ nama, email, password }: SignUpData) {
 
 // Sign In - Login user
 export async function signIn({ email, password }: SignInData) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured. Please check your environment variables.');
+  }
 
-  if (error) throw error;
-  return data;
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Sign in error:', error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error: any) {
+    console.error('Sign in failed:', error);
+    throw new Error(error.message || 'Failed to sign in. Please try again.');
+  }
 }
 
 // Sign Out - Logout user
 export async function signOut() {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured. Please check your environment variables.');
+  }
+
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
 
 // Get Current User - Dapatkan user yang sedang login
 export async function getCurrentUser() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  if (!isSupabaseConfigured()) {
+    console.warn('Supabase is not configured');
+    return null;
+  }
 
-  if (error) throw error;
-  return user;
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
+    
+    return user;
+  } catch (error) {
+    console.error('Failed to get current user:', error);
+    return null;
+  }
 }
 
 // Get User Profile - Dapatkan profile user dari tabel profiles
