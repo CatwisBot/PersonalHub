@@ -1,14 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { navItems } from "@/constant/navItems";
+import { getCurrentUser, signOut } from "@/lib/auth";
+import { LogOut } from "lucide-react";
+import { useApp } from "@/contexts/AppContext";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { setIsAuthenticated: setGlobalAuth, setShowNavbar, setHasSeenSplash } = useApp();
   const [isVisible, setIsVisible] = useState(true);
   const [scrollTimeout, setScrollTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    async function checkAuth() {
+      const user = await getCurrentUser();
+      setIsAuthenticated(!!user);
+    }
+    checkAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    await signOut();
+    setIsAuthenticated(false);
+    setGlobalAuth(false); // Update global state
+    setShowNavbar(false); // Hide navbar immediately
+    setHasSeenSplash(false); // Reset splash flag
+    
+    // Force full page reload to reset all states
+    window.location.href = "/";
+  };
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -61,8 +86,8 @@ export default function Navbar() {
       }`}
     >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-center h-16">
-          <div className="flex items-center space-x-2 sm:space-x-8">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center space-x-2 sm:space-x-8 mx-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -85,6 +110,17 @@ export default function Navbar() {
               );
             })}
           </div>
+          
+          {isAuthenticated && (
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all duration-300 hover:bg-red-600/80 bg-red-600 text-white shadow-lg"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline text-sm font-medium">Keluar</span>
+            </button>
+          )}
         </div>
       </div>
     </nav>
