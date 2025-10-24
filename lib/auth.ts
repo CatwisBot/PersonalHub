@@ -1,5 +1,14 @@
 import { supabase } from "./supabase";
 
+// Helper to check if Supabase is properly configured
+function checkSupabaseConfig() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn('Supabase environment variables are not configured');
+    return false;
+  }
+  return true;
+}
+
 export interface SignUpData {
   nama: string;
   email: string;
