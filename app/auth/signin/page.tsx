@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, LogIn, AlertCircle, Loader2 } from "lucide-react";
 import { signIn } from "@/lib/auth";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -14,9 +15,24 @@ export default function SignInPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [configError, setConfigError] = useState(false);
+
+  useEffect(() => {
+    // Check if Supabase is configured
+    if (!isSupabaseConfigured()) {
+      setConfigError(true);
+      setError("Konfigurasi Supabase tidak ditemukan. Pastikan environment variables sudah diset dengan benar.");
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (configError) {
+      setError("Tidak dapat login karena konfigurasi Supabase tidak lengkap.");
+      return;
+    }
+
     setError("");
     setLoading(true);
 
@@ -25,13 +41,19 @@ export default function SignInPage() {
       router.push("/");
       router.refresh();
     } catch (err: any) {
+      console.error('Login error:', err);
+      
       // Custom error messages
       if (err.message.includes("Email not confirmed")) {
         setError("Email belum dikonfirmasi. Silakan cek petunjuk di SETUP_AUTH.md atau hubungi admin.");
       } else if (err.message.includes("Invalid login credentials")) {
         setError("Email atau password salah. Periksa kembali kredensial Anda.");
+      } else if (err.message.includes("Failed to fetch") || err.message.includes("fetch")) {
+        setError("Gagal terhubung ke server. Periksa koneksi internet Anda atau hubungi administrator.");
+      } else if (err.message.includes("Supabase is not configured")) {
+        setError("Konfigurasi Supabase tidak ditemukan. Hubungi administrator.");
       } else {
-        setError(err.message || "Terjadi kesalahan saat login");
+        setError(err.message || "Terjadi kesalahan saat login. Silakan coba lagi.");
       }
     } finally {
       setLoading(false);
