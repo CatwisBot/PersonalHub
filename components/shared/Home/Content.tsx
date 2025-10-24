@@ -13,6 +13,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { getDashboardData } from "@/lib/api";
+import Intro from "./Intro";
 
 export default function Content() {
   const [loading, setLoading] = useState(true);
@@ -112,6 +113,9 @@ export default function Content() {
   return (
     <div className="bg-linear-to-b from-slate-900 via-blue-950 to-slate-900 py-12">
       <div className="container mx-auto px-4">
+        {/* Intro Section */}
+        <Intro />
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Section 1: Pengeluaran */}
           <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 flex flex-col h-full">
