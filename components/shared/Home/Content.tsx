@@ -30,9 +30,9 @@ export default function Content() {
   ];
 
   const hutang = [
-    { id: 1, nama: "Budi", jumlah: 500000, jatuhTempo: "2025-11-01" },
-    { id: 2, nama: "Siti", jumlah: 300000, jatuhTempo: "2025-11-05" },
-    { id: 3, nama: "Andi", jumlah: 200000, jatuhTempo: "2025-11-10" },
+    { id: 1, nama: "Budi", jumlah: 500000, kebutuhan: "Beli Pancong" },
+    { id: 2, nama: "Siti", jumlah: 300000, kebutuhan: "Bayar Angkot" },
+    { id: 3, nama: "Andi", jumlah: 200000, kebutuhan: "Makan Siang" },
   ];
 
   const formatRupiah = (angka: number) => {
@@ -218,7 +218,7 @@ export default function Content() {
                       </p>
                     </div>
                     <p className="text-xs text-gray-400">
-                      Jatuh Tempo: {item.jatuhTempo}
+                      {item.kebutuhan}
                     </p>
                   </div>
                 ))}
