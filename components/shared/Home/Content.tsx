@@ -1,39 +1,55 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  Wallet, 
-  CheckSquare, 
-  HandCoins, 
-  ArrowRight, 
+import {
+  Wallet,
+  CheckSquare,
+  HandCoins,
+  ArrowRight,
   AlertCircle,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
+import { getDashboardData } from "@/lib/api";
 
 export default function Content() {
-  // Dummy data - nanti bisa diganti dengan data dari API/database
-  const totalPengeluaran = 2500000;
-  
-  const pengeluaranTerbaru = [
-    { id: 1, nama: "Belanja Bulanan", jumlah: 1500000, tanggal: "10 Oktotober 2025" },
-    { id: 2, nama: "Listrik", jumlah: 500000, tanggal: "12 Oktober 2025" },
-    { id: 3, nama: "Internet", jumlah: 300000, tanggal: "15 Oktober 2025" },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState({
+    totalPengeluaran: 0,
+    pengeluaranTerbaru: [] as any[],
+    tugasBelumSelesai: 0,
+    tugasList: [] as any[],
+    hutangBelumLunas: [] as any[],
+  });
 
-  const tugasBelumSelesai = 5;
-  
-  const tugas = [
-    { id: 1, nama: "Selesaikan Laporan Keuangan", level: "mendesak", deadline: "20 Oktober 2025" },
-    { id: 2, nama: "Review Code Project", level: "penting", deadline: "22 Oktober 2025" },
-    { id: 3, nama: "Update Documentation", level: "normal", deadline: "25 Oktober 2025" },
-  ];
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const dashboardData = await getDashboardData();
+        setData({
+          totalPengeluaran: dashboardData.totalPengeluaran,
+          pengeluaranTerbaru: dashboardData.pengeluaranTerbaru,
+          tugasBelumSelesai: dashboardData.tugasBelumSelesai,
+          tugasList: dashboardData.tugasList,
+          hutangBelumLunas: dashboardData.hutangBelumLunas,
+        });
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const hutang = [
-    { id: 1, nama: "Budi", jumlah: 500000, kebutuhan: "Beli Pancong" },
-    { id: 2, nama: "Siti", jumlah: 300000, kebutuhan: "Bayar Angkot" },
-    { id: 3, nama: "Andi", jumlah: 200000, kebutuhan: "Makan Siang" },
-  ];
+    fetchData();
+
+    // Refresh data setiap 5 menit untuk update level tugas otomatis
+    const interval = setInterval(fetchData, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const formatRupiah = (angka: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -41,6 +57,15 @@ export default function Content() {
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(angka);
+  };
+
+  const formatTanggal = (tanggal: string) => {
+    const date = new Date(tanggal);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
   };
 
   const getLevelColor = (level: string) => {
@@ -69,6 +94,21 @@ export default function Content() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="bg-linear-to-b from-slate-900 via-blue-950 to-slate-900 py-12 min-h-screen">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+              <p className="text-gray-400">Memuat data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-linear-to-b from-slate-900 via-blue-950 to-slate-900 py-12">
       <div className="container mx-auto px-4">
@@ -88,7 +128,9 @@ export default function Content() {
                 </div>
               </div>
               <div className="mt-3 sm:mt-4">
-                <p className="text-2xl sm:text-3xl font-bold">{formatRupiah(totalPengeluaran)}</p>
+                <p className="text-2xl sm:text-3xl font-bold">
+                  {formatRupiah(data.totalPengeluaran)}
+                </p>
               </div>
             </div>
 
@@ -97,24 +139,32 @@ export default function Content() {
                 Pengeluaran Terbaru
               </h4>
               <div className="space-y-2 sm:space-y-3 flex-1 mb-4">
-                {pengeluaranTerbaru.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-gray-100 text-sm sm:text-base">{item.nama}</p>
-                      <p className="font-semibold text-green-400 text-sm sm:text-base">
-                        {formatRupiah(item.jumlah)}
-                      </p>
+                {data.pengeluaranTerbaru.length > 0 ? (
+                  data.pengeluaranTerbaru.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium text-gray-100 text-sm sm:text-base">
+                          {item.nama}
+                        </p>
+                        <p className="font-semibold text-green-400 text-sm sm:text-base">
+                          {formatRupiah(Number(item.jumlah))}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-400">{formatTanggal(item.tanggal)}</p>
                     </div>
-                    <p className="text-xs text-gray-400">{item.tanggal}</p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">
+                    Belum ada pengeluaran
+                  </p>
+                )}
               </div>
 
               <Link
-                href="/laporan"
+                href="/Laporan?tab=keuangan"
                 className="flex items-center justify-center space-x-2 w-full bg-green-600 hover:bg-green-700 text-white py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base shadow-lg hover:shadow-xl mt-auto"
               >
                 <span>Lihat Semua</span>
@@ -138,7 +188,9 @@ export default function Content() {
                 </div>
               </div>
               <div className="mt-3 sm:mt-4">
-                <p className="text-2xl sm:text-3xl font-bold">{tugasBelumSelesai} Tugas</p>
+                <p className="text-2xl sm:text-3xl font-bold">
+                  {data.tugasBelumSelesai} Tugas
+                </p>
               </div>
             </div>
 
@@ -147,33 +199,37 @@ export default function Content() {
                 Daftar Tugas
               </h4>
               <div className="space-y-2 sm:space-y-3 flex-1 mb-4">
-                {tugas.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-gray-100 flex-1 text-sm sm:text-base">
-                        {item.nama}
+                {data.tugasList.length > 0 ? (
+                  data.tugasList.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium text-gray-100 flex-1 text-sm sm:text-base">
+                          {item.nama}
+                        </p>
+                        <span
+                          className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-full border ml-2 ${getLevelColor(
+                            item.level
+                          )}`}
+                        >
+                          {getLevelIcon(item.level)}
+                          <span className="capitalize">{item.level}</span>
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        Deadline: {formatTanggal(item.deadline)}
                       </p>
-                      <span
-                        className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-full border ml-2 ${getLevelColor(
-                          item.level
-                        )}`}
-                      >
-                        {getLevelIcon(item.level)}
-                        <span className="capitalize">{item.level}</span>
-                      </span>
                     </div>
-                    <p className="text-xs text-gray-400">
-                      Deadline: {item.deadline}
-                    </p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">Belum ada tugas</p>
+                )}
               </div>
 
               <Link
-                href="/tambah"
+                href="/Laporan?tab=tugas"
                 className="flex items-center justify-center space-x-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base shadow-lg hover:shadow-xl mt-auto"
               >
                 <span>Kelola Tugas</span>
@@ -197,7 +253,9 @@ export default function Content() {
                 </div>
               </div>
               <div className="mt-3 sm:mt-4">
-                <p className="text-2xl sm:text-3xl font-bold">{hutang.length} Hutang</p>
+                <p className="text-2xl sm:text-3xl font-bold">
+                  {data.hutangBelumLunas.length} Hutang
+                </p>
               </div>
             </div>
 
@@ -206,26 +264,32 @@ export default function Content() {
                 Daftar Hutang
               </h4>
               <div className="space-y-2 sm:space-y-3 flex-1 mb-4">
-                {hutang.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-gray-100 text-sm sm:text-base">{item.nama}</p>
-                      <p className="font-semibold text-yellow-400 text-sm sm:text-base">
-                        {formatRupiah(item.jumlah)}
+                {data.hutangBelumLunas.length > 0 ? (
+                  data.hutangBelumLunas.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium text-gray-100 text-sm sm:text-base">
+                          {item.nama}
+                        </p>
+                        <p className="font-semibold text-yellow-400 text-sm sm:text-base">
+                          {formatRupiah(Number(item.jumlah))}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        Jatuh Tempo: {formatTanggal(item.jatuh_tempo)}
                       </p>
                     </div>
-                    <p className="text-xs text-gray-400">
-                      {item.kebutuhan}
-                    </p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">Belum ada hutang</p>
+                )}
               </div>
 
               <Link
-                href="/laporan"
+                href="/Laporan?tab=hutang"
                 className="flex items-center justify-center space-x-2 w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base shadow-lg hover:shadow-xl mt-auto"
               >
                 <span>Lihat Semua</span>
