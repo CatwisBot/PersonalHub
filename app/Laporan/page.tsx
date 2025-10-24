@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { TrendingUp, TrendingDown, Wallet, CheckSquare, HandCoins, Plus, Loader2 } from "lucide-react";
 import { getPengeluaran, getPemasukan, getTugas, getHutang, updateTugas, updateHutang, getTotalPemasukan, getTotalPengeluaran } from "@/lib/api";
+import { getCurrentUser } from "@/lib/auth";
+import { useApp } from "@/contexts/AppContext";
 
 import PemasukanModal from "@/components/shared/Laporan/PemasukanModal";
 import PengeluaranList from "@/components/shared/Laporan/PengeluaranList";
@@ -14,9 +16,12 @@ import ChartSection from "@/components/shared/Laporan/ChartSection";
 
 export default function LaporanPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { setShowNavbar } = useApp();
   const tabParam = searchParams.get("tab") as "keuangan" | "tugas" | "hutang" | null;
   
   const [loading, setLoading] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState<"keuangan" | "tugas" | "hutang">(tabParam || "keuangan");
   const [showPemasukanModal, setShowPemasukanModal] = useState(false);
   const [pengeluaran, setPengeluaran] = useState<any[]>([]);
@@ -30,8 +35,20 @@ export default function LaporanPage() {
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    async function checkAuth() {
+      const user = await getCurrentUser();
+      
+      if (!user) {
+        router.push("/");
+      } else {
+        setShowNavbar(true);
+        setIsCheckingAuth(false);
+        fetchData();
+      }
+    }
+    
+    checkAuth();
+  }, [router, setShowNavbar]);
 
   // Update tab when URL parameter changes
   useEffect(() => {
@@ -60,33 +77,35 @@ export default function LaporanPage() {
     }
   };
 
-  const handleToggleTugas = async (id: string, selesai: boolean) => {
-    try {
-      await updateTugas(id, { selesai: !selesai });
-      await fetchData();
-    } catch (error) {
-      console.error("Error updating tugas:", error);
-    }
+  const handleMarkSelesai = async (id: string) => {
+    await updateTugas(id, { selesai: true });
+    fetchData();
   };
 
-  const handleToggleHutang = async (id: string, lunas: boolean) => {
-    try {
-      await updateHutang(id, { lunas: !lunas });
-      await fetchData();
-    } catch (error) {
-      console.error("Error updating hutang:", error);
-    }
+  const handleMarkLunas = async (id: string) => {
+    await updateHutang(id, { lunas: true });
+    fetchData();
   };
 
-  const saldo = totalPemasukan - totalPengeluaran;
-
-  if (loading) {
+  if (isCheckingAuth || loading) {
     return (
       <div className="min-h-screen bg-linear-to-b from-slate-900 via-blue-950 to-slate-900 py-12 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
       </div>
     );
   }
+
+  const saldo = totalPemasukan - totalPengeluaran;
+
+  const handleToggleTugas = async (id: string) => {
+    await updateTugas(id, { selesai: true });
+    fetchData();
+  };
+
+  const handleToggleHutang = async (id: string) => {
+    await updateHutang(id, { lunas: true });
+    fetchData();
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-900 via-blue-950 to-slate-900 py-12">
