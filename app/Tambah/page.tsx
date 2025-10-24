@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Wallet, CheckSquare, HandCoins, TrendingUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Wallet, CheckSquare, HandCoins, TrendingUp, Loader2 } from "lucide-react";
 import {
   addPengeluaran,
   addTugas,
@@ -10,6 +10,8 @@ import {
   calculateTaskLevel,
 } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
+import { useApp } from "@/contexts/AppContext";
 
 import TabButton from "@/components/shared/Tambah/TabButton";
 import AlertMessage from "@/components/shared/Tambah/AlertMessage";
@@ -30,6 +32,8 @@ import type {
 
 export default function TambahPage() {
   const router = useRouter();
+  const { setShowNavbar } = useApp();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("pengeluaran");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -63,6 +67,22 @@ export default function TambahPage() {
     target_tabungan: "",
   });
 
+  // Check auth - MUST be after all useState hooks
+  useEffect(() => {
+    async function checkAuth() {
+      const user = await getCurrentUser();
+      
+      if (!user) {
+        router.push("/");
+      } else {
+        setShowNavbar(true);
+        setIsCheckingAuth(false);
+      }
+    }
+    
+    checkAuth();
+  }, [router, setShowNavbar]);
+
   const currentLevel = tugasForm.deadline
     ? calculateTaskLevel(tugasForm.deadline)
     : "normal";
@@ -71,6 +91,15 @@ export default function TambahPage() {
     const number = angka.replace(/[^,\d]/g, "");
     return new Intl.NumberFormat("id-ID").format(Number(number));
   };
+
+  // Show loading while checking auth
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-linear-to-b from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
