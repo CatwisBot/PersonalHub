@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import Navbar from "@/components/shared/_Navbar/Navbar";
-import Footer from "@/components/shared/_Footer/Footer";
+import { AppProvider } from "@/contexts/AppContext";
+import LayoutClient from "@/components/shared/LayoutClient";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,9 +24,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} antialiased`}
       >
-        <Navbar />
-        {children}
-        <Footer />
+        <AppProvider>
+          <LayoutClient>{children}</LayoutClient>
+        </AppProvider>
       </body>
     </html>
   );
