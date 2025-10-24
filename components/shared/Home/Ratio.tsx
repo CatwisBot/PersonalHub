@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -11,29 +12,67 @@ import {
   Calendar,
   DollarSign,
   Activity,
+  Loader2,
 } from "lucide-react";
+import { getDashboardData } from "@/lib/api";
 
 export default function Ratio() {
-  // Dummy data - nanti bisa diganti dengan data dari API/database
-  const totalBudget = 5000000;
-  const totalPengeluaran = 2500000;
-  const sisaBudget = totalBudget - totalPengeluaran;
-  const persenPengeluaran = (totalPengeluaran / totalBudget) * 100;
-  const persenSisa = 100 - persenPengeluaran;
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<any>(null);
 
-  const totalTugas = 10;
-  const tugasSelesai = 5;
-  const tugasBelumSelesai = 5;
-  const persenProduktivitas = (tugasSelesai / totalTugas) * 100;
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const data = await getDashboardData();
+        setDashboardData(data);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const totalHutang = 3;
-  const totalNilaiHutang = 1000000;
-  const hutangJatuhTempoMingguIni = 1;
+    fetchData();
+  }, []);
 
+  if (loading) {
+    return (
+      <div className="bg-linear-to-b from-slate-900 via-blue-950 to-slate-900 py-15">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Data dari Supabase
+  const totalBudget = dashboardData?.budget?.total_budget || 0;
+  const totalPengeluaran = dashboardData?.totalPengeluaran || 0;
+  const totalPemasukan = dashboardData?.totalPemasukan || 0;
+  
+  // Sisa Budget: dimulai dari 0, bertambah saat pemasukan, berkurang saat pengeluaran
+  const sisaBudget = totalPemasukan - totalPengeluaran;
+  
+  // Persentase dihitung dari total pemasukan (jika ada)
+  const persenPengeluaran = totalPemasukan > 0 ? (totalPengeluaran / totalPemasukan) * 100 : 0;
+  const persenSisa = totalPemasukan > 0 ? (sisaBudget / totalPemasukan) * 100 : 0;
+
+  const totalTugas = dashboardData?.totalTugas || 0;
+  const tugasSelesai = totalTugas - (dashboardData?.tugasBelumSelesai || 0);
+  const tugasBelumSelesai = dashboardData?.tugasBelumSelesai || 0;
+  const persenProduktivitas = totalTugas > 0 ? (tugasSelesai / totalTugas) * 100 : 0;
+
+  const totalHutang = dashboardData?.hutangBelumLunas?.length || 0;
+  const totalNilaiHutang = dashboardData?.totalNilaiHutang || 0;
+  const hutangJatuhTempoMingguIni = dashboardData?.hutangJatuhTempoMingguIni || 0;
+
+  const targetTabungan = dashboardData?.budget?.target_tabungan || 0;
   const targetBulanan = {
-    tabungan: 3000000,
+    tabungan: targetTabungan,
     realisasi: sisaBudget,
-    persenCapai: (sisaBudget / 3000000) * 100,
+    persenCapai: targetTabungan > 0 ? (sisaBudget / targetTabungan) * 100 : 0,
   };
 
   const formatRupiah = (angka: number) => {
@@ -97,7 +136,7 @@ export default function Ratio() {
               <div className="bg-green-500/20 p-3 rounded-lg">
                 <Wallet className="w-6 h-6 text-green-400" />
               </div>
-              {persenSisa >= 50 ? (
+              {sisaBudget >= 0 ? (
                 <TrendingUp className="w-5 h-5 text-green-400" />
               ) : (
                 <TrendingDown className="w-5 h-5 text-red-400" />
@@ -106,17 +145,17 @@ export default function Ratio() {
             <h3 className="text-gray-400 text-xs sm:text-sm font-medium mb-2">
               Sisa Budget
             </h3>
-            <p className={`text-2xl sm:text-3xl font-bold ${getStatusColor(persenSisa)} mb-2`}>
-              {persenSisa.toFixed(0)}%
+            <p className={`text-2xl sm:text-3xl font-bold ${sisaBudget >= 0 ? 'text-green-400' : 'text-red-400'} mb-2`}>
+              {formatRupiah(sisaBudget)}
             </p>
             <div className="flex items-center justify-between text-xs text-gray-400">
-              <span>{formatRupiah(sisaBudget)}</span>
-              <DollarSign className="w-4 h-4" />
+              <span className="text-green-400">+{formatRupiah(totalPemasukan)}</span>
+              <span className="text-red-400">-{formatRupiah(totalPengeluaran)}</span>
             </div>
             <div className="mt-3 bg-slate-700/50 rounded-full h-2 overflow-hidden">
               <div
-                className={`h-full ${getProgressBarColor(persenSisa)} transition-all duration-500`}
-                style={{ width: `${persenSisa}%` }}
+                className={`h-full ${sisaBudget >= 0 ? 'bg-green-500' : 'bg-red-500'} transition-all duration-500`}
+                style={{ width: `${Math.min(Math.max(persenSisa, 0), 100)}%` }}
               />
             </div>
           </div>
@@ -291,11 +330,13 @@ export default function Ratio() {
                   Manajemen Keuangan
                 </h4>
                 <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
-                  {persenSisa >= 50
-                    ? "Bagus! Anda berhasil menghemat lebih dari setengah budget."
-                    : persenSisa >= 30
-                    ? "Hati-hati dengan pengeluaran di sisa bulan ini."
-                    : "Waspada! Budget Anda hampir habis."}
+                  {sisaBudget > 0 && totalPemasukan > 0
+                    ? `Bagus! Anda masih memiliki sisa dana sebesar ${formatRupiah(sisaBudget)}.`
+                    : sisaBudget === 0 && totalPemasukan > 0
+                    ? "Pemasukan dan pengeluaran Anda seimbang."
+                    : sisaBudget < 0
+                    ? "Waspada! Pengeluaran melebihi pemasukan."
+                    : "Belum ada data keuangan. Mulai tambahkan pemasukan."}
                 </p>
               </div>
             </div>
@@ -339,16 +380,16 @@ export default function Ratio() {
             </div>
             <div className="text-left sm:text-right">
               <p className="text-white font-semibold text-sm sm:text-base mb-1">
-                {persenProduktivitas >= 50 && persenSisa >= 40
+                {persenProduktivitas >= 50 && sisaBudget > 0
                   ? "🎉 Performa Sangat Baik!"
-                  : persenProduktivitas >= 40 || persenSisa >= 30
+                  : persenProduktivitas >= 40 || sisaBudget >= 0
                   ? "👍 Cukup Baik, Tetap Semangat!"
                   : "⚠️ Butuh Perbaikan"}
               </p>
               <p className="text-gray-400 text-xs sm:text-sm">
-                {persenProduktivitas >= 50 && persenSisa >= 40
+                {persenProduktivitas >= 50 && sisaBudget > 0
                   ? "Produktivitas dan keuangan Anda terkendali dengan baik"
-                  : "Fokus pada produktivitas dan pengelolaan budget"}
+                  : "Fokus pada produktivitas dan pengelolaan keuangan"}
               </p>
             </div>
           </div>
