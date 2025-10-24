@@ -1,6 +1,29 @@
+'use client';
+
 import { Sparkles, Wallet, CheckSquare, HandCoins } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getCurrentUser, getUserProfile } from "@/lib/auth";
+import type { User } from "@supabase/supabase-js";
 
 export default function Header() {
+  const [user, setUser] = useState<User | null>(null);
+  const [namaUser, setNamaUser] = useState<string>("");
+
+  useEffect(() => {
+    async function fetchUser() {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+      
+      if (currentUser) {
+        const profile = await getUserProfile(currentUser.id);
+        if (profile) {
+          setNamaUser(profile.nama || "");
+        }
+      }
+    }
+    
+    fetchUser();
+  }, []);
   return (
     <header className="bg-linear-to-br from-slate-900 via-blue-950 to-slate-900 text-white relative overflow-hidden">
       {/* Background Pattern */}
