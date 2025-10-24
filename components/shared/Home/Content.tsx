@@ -16,17 +16,17 @@ export default function Content() {
   const totalPengeluaran = 2500000;
   
   const pengeluaranTerbaru = [
-    { id: 1, nama: "Belanja Bulanan", jumlah: 1500000, tanggal: "2025-10-24" },
-    { id: 2, nama: "Listrik", jumlah: 500000, tanggal: "2025-10-23" },
-    { id: 3, nama: "Internet", jumlah: 300000, tanggal: "2025-10-22" },
+    { id: 1, nama: "Belanja Bulanan", jumlah: 1500000, tanggal: "10 Oktotober 2025" },
+    { id: 2, nama: "Listrik", jumlah: 500000, tanggal: "12 Oktober 2025" },
+    { id: 3, nama: "Internet", jumlah: 300000, tanggal: "15 Oktober 2025" },
   ];
 
   const tugasBelumSelesai = 5;
   
   const tugas = [
-    { id: 1, nama: "Selesaikan Laporan Keuangan", level: "mendesak", deadline: "2025-10-25" },
-    { id: 2, nama: "Review Code Project", level: "penting", deadline: "2025-10-27" },
-    { id: 3, nama: "Update Documentation", level: "normal", deadline: "2025-10-30" },
+    { id: 1, nama: "Selesaikan Laporan Keuangan", level: "mendesak", deadline: "20 Oktober 2025" },
+    { id: 2, nama: "Review Code Project", level: "penting", deadline: "22 Oktober 2025" },
+    { id: 3, nama: "Update Documentation", level: "normal", deadline: "25 Oktober 2025" },
   ];
 
   const hutang = [
@@ -70,11 +70,11 @@ export default function Content() {
   };
 
   return (
-    <div className="bg-linear-to-b from-slate-900 via-blue-950 to-slate-900 py-12 min-h-screen">
+    <div className="bg-linear-to-b from-slate-900 via-blue-950 to-slate-900 py-12">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Section 1: Pengeluaran */}
-          <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+          <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 flex flex-col h-full">
             <div className="bg-linear-to-r from-green-600 to-emerald-600 p-4 sm:p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 sm:space-x-3">
@@ -92,30 +92,30 @@ export default function Content() {
               </div>
             </div>
 
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 flex flex-col flex-1">
               <h4 className="text-xs sm:text-sm font-semibold text-gray-300 mb-3 sm:mb-4">
                 Pengeluaran Terbaru
               </h4>
-              <div className="space-y-2 sm:space-y-3">
+              <div className="space-y-2 sm:space-y-3 flex-1 mb-4">
                 {pengeluaranTerbaru.map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors gap-2 sm:gap-0"
+                    className="p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
                   >
-                    <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
                       <p className="font-medium text-gray-100 text-sm sm:text-base">{item.nama}</p>
-                      <p className="text-xs text-gray-400">{item.tanggal}</p>
+                      <p className="font-semibold text-green-400 text-sm sm:text-base">
+                        {formatRupiah(item.jumlah)}
+                      </p>
                     </div>
-                    <p className="font-semibold text-green-400 text-sm sm:text-base">
-                      {formatRupiah(item.jumlah)}
-                    </p>
+                    <p className="text-xs text-gray-400">{item.tanggal}</p>
                   </div>
                 ))}
               </div>
 
               <Link
                 href="/laporan"
-                className="flex items-center justify-center space-x-2 mt-4 sm:mt-6 w-full bg-green-600 hover:bg-green-700 text-white py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base shadow-lg hover:shadow-xl"
+                className="flex items-center justify-center space-x-2 w-full bg-green-600 hover:bg-green-700 text-white py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base shadow-lg hover:shadow-xl mt-auto"
               >
                 <span>Lihat Semua</span>
                 <ArrowRight className="w-4 h-4" />
@@ -124,7 +124,7 @@ export default function Content() {
           </div>
 
           {/* Section 2: Tugas */}
-          <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+          <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 flex flex-col h-full">
             <div className="bg-linear-to-r from-blue-600 to-cyan-600 p-4 sm:p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 sm:space-x-3">
@@ -142,22 +142,22 @@ export default function Content() {
               </div>
             </div>
 
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 flex flex-col flex-1">
               <h4 className="text-xs sm:text-sm font-semibold text-gray-300 mb-3 sm:mb-4">
                 Daftar Tugas
               </h4>
-              <div className="space-y-2 sm:space-y-3">
+              <div className="space-y-2 sm:space-y-3 flex-1 mb-4">
                 {tugas.map((item) => (
                   <div
                     key={item.id}
                     className="p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                    <div className="flex items-center justify-between mb-1">
                       <p className="font-medium text-gray-100 flex-1 text-sm sm:text-base">
                         {item.nama}
                       </p>
                       <span
-                        className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-full border w-fit ${getLevelColor(
+                        className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-full border ml-2 ${getLevelColor(
                           item.level
                         )}`}
                       >
@@ -174,7 +174,7 @@ export default function Content() {
 
               <Link
                 href="/tambah"
-                className="flex items-center justify-center space-x-2 mt-4 sm:mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base shadow-lg hover:shadow-xl"
+                className="flex items-center justify-center space-x-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base shadow-lg hover:shadow-xl mt-auto"
               >
                 <span>Kelola Tugas</span>
                 <ArrowRight className="w-4 h-4" />
@@ -183,7 +183,7 @@ export default function Content() {
           </div>
 
           {/* Section 3: Hutang */}
-          <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300">
+          <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700/50 overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 flex flex-col h-full">
             <div className="bg-linear-to-r from-yellow-600 to-amber-600 p-4 sm:p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 sm:space-x-3">
@@ -201,24 +201,24 @@ export default function Content() {
               </div>
             </div>
 
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 flex flex-col flex-1">
               <h4 className="text-xs sm:text-sm font-semibold text-gray-300 mb-3 sm:mb-4">
                 Daftar Hutang
               </h4>
-              <div className="space-y-2 sm:space-y-3">
+              <div className="space-y-2 sm:space-y-3 flex-1 mb-4">
                 {hutang.map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors gap-2 sm:gap-0"
+                    className="p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors"
                   >
-                    <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
                       <p className="font-medium text-gray-100 text-sm sm:text-base">{item.nama}</p>
-                      <p className="text-xs text-gray-400">
-                        Jatuh Tempo: {item.jatuhTempo}
+                      <p className="font-semibold text-yellow-400 text-sm sm:text-base">
+                        {formatRupiah(item.jumlah)}
                       </p>
                     </div>
-                    <p className="font-semibold text-yellow-400 text-sm sm:text-base">
-                      {formatRupiah(item.jumlah)}
+                    <p className="text-xs text-gray-400">
+                      Jatuh Tempo: {item.jatuhTempo}
                     </p>
                   </div>
                 ))}
@@ -226,7 +226,7 @@ export default function Content() {
 
               <Link
                 href="/laporan"
-                className="flex items-center justify-center space-x-2 mt-4 sm:mt-6 w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base shadow-lg hover:shadow-xl"
+                className="flex items-center justify-center space-x-2 w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2.5 sm:py-3 rounded-lg transition-colors font-medium text-sm sm:text-base shadow-lg hover:shadow-xl mt-auto"
               >
                 <span>Lihat Semua</span>
                 <ArrowRight className="w-4 h-4" />
